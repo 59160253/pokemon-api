@@ -1,10 +1,10 @@
 const express = require('express')
 const app = express()
-const port = 3000
+//const port = 3000
 
 app.use(express.json())
 
-app.get('/', (req, res) => res.send(Pokemon1))
+app.get('/', (req, res) => res.send({message:'Hello world'}))
 
 class Pokemon{
     constructor(id,name,type,type2){
@@ -33,7 +33,7 @@ function isNotSufficientParam(v){
 // ]
 let Pokemon2 = []
 Pokemon2.push(new Pokemon(generateNewId(Pokemon2.length),'Pikachu','Electric',''))
-Pokemon2.push(new Pokemon(generateNewId(Pokemon2.length),'Paras','Bug'))
+Pokemon2.push(new Pokemon(generateNewId(Pokemon2.length),'Paras','Bug',''))
 //Pokemon2.push(createPokemon('Pikachu','Electric'))
 
 app.get('/pokemon', (req, res) => res.send(Pokemon2))
@@ -41,32 +41,43 @@ app.get('/pokemon', (req, res) => res.send(Pokemon2))
 
 
 app.get('/pokemon/:id', (req, res) => {
-    let p = Pokemon2[req.params.id - 1]
-    if(p === undefined){
+    let id = req.params.id
+    if(isNotSufficientParam(id)){
         res.status(400).send({error:'Cannot update Pokemon: Pokemon is not found'})
+    }
+    let p = Pokemon2[id - 1]
+    if(p === undefined|| p === null){
+        res.status(400).send({error:'Cannot update Pokemon: Pokemon is not found'})
+        return
     }
     res.send(p)
 })
 
 app.put('/pokemon/:id', (req, res) => {
+    if(isNotSufficientParam(req.params.type)){
+        res.status(400).send({ error: 'Insufficient parameters(put): type2 is required parameter'})
+        return
+    }
     if(isNotSufficientParam(req.params.id)){
         res.status(400).send({ error: 'Insufficient parameters: type2 is required parameter'})
         return
     }   
     let p = Pokemon2[req.params.id - 1]
-    if(p === undefined){
+    if(p === undefined || p === null|| p === ''){
         res.status(400).send({error:'Cannot update Pokemon: Pokemon is not found'})
+        return
     }
     p.type2 = req.body.type2
-    res.sendStatus(201)
+    res.sendStatus(200)
 })
 
 app.post('/pokemon', (req, res) => {
     console.log(isNotSufficientParam(req.body.name))
+    
     if(isNotSufficientParam(req.body.name)||
         isNotSufficientParam(req.body.type)){
 
-           res.status(400).send({ error: 'Insufficient parameters: name and type are required parameters'})
+           res.status(400).send({ error: 'Insufficient parameters(post): name and type are required parameters'})
            return
     }
 
@@ -103,9 +114,6 @@ app.delete('/pokemon/:id',(req,res) => {
 })
 
 
-app.listen(port, () => console.log(`Pokemon API listening on port ${port}!`))
-
-
 function isPokemonExisted(id){
     return Pokemon2[id-1] !== undefined && Pokemon2[id-1] !== null
 }
@@ -120,3 +128,8 @@ function createPokemon(name,type){
     tmp.id = generateNewId(Pokemon2.length)
     return tmp
 }
+
+module.exports = app
+
+//app.listen(port, () => console.log(`Pokemon API listening on port ${port}!`))
+
